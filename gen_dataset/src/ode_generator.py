@@ -159,6 +159,7 @@ class ODEGenerator:
 
         return stack
 
+    @timeout(TIMEOUT)
     def generate_clean_solution(self, rng: RandomState):
         # choose a max number of operators to place in the tree
         # [1, max_ops] inclusive
