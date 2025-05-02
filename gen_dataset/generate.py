@@ -39,13 +39,24 @@ if __name__ == "__main__":
                     continue
                 seed_encounter.add(seed)
 
-                out = generator.generate_ode_pair(rng, sol_encountered)
+                sol_out = generator.generate_clean_solution(rng)
 
-                if out is None:
-                    try_log("Invalid output. Regenerating...")
+                if sol_out is None:
                     continue
 
-                eq_str, eq_prefix, sol_str, sol_prefix = out
+                sol_str, sol_clean, sol_prefix = sol_out
+
+                if sol_str in sol_encountered:
+                    try_log(f"Solution {sol_str} already encountered. Regenerating...")
+                    continue
+                sol_encountered.add(sol_str)
+
+                ode_out = generator.generate_ode(rng, sol_clean)
+
+                if ode_out is None:
+                    continue
+
+                eq_str, eq_prefix = ode_out
 
                 break
             except KeyboardInterrupt:

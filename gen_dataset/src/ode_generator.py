@@ -159,8 +159,7 @@ class ODEGenerator:
 
         return stack
 
-    @timeout(TIMEOUT)
-    def generate_ode_pair(self, rng: RandomState, seen_solutions: set):
+    def generate_clean_solution(self, rng: RandomState):
         # choose a max number of operators to place in the tree
         # [1, max_ops] inclusive
         num_ops = rng.randint(1, self.max_ops + 1)
@@ -178,19 +177,27 @@ class ODEGenerator:
             return None
 
         # 3. Clean solution
-        solution_cleaned = clean_solution(solution_sympy)
+        sol_clean = clean_solution(solution_sympy)
 
         # 4. Skip if solution is too long
-        sol_str = sympy_to_str(solution_cleaned)
+        sol_str = sympy_to_str(sol_clean)
         if len(sol_str) > self.max_len:
             try_log("Solution is too long.")
             return None
-        if sol_str in seen_solutions:
-            try_log("Solution already encountered.")
+
+        # 5. Convert to prefix
+        try:
+            sol_prefix = sympy_to_prefix(sol_clean)
+        except Exception:
+            try_log("Failed to convert to prefix.")
             return None
 
+        return sol_str, sol_clean, " ".join(sol_prefix)
+
+    @timeout(TIMEOUT)
+    def generate_ode(self, rng: RandomState, sol_clean: sp.Expr):
         # 5. Solve y = f(x, c) for c
-        solve_for_cs = sp.solve(f(x) - solution_cleaned, c, check=False, simplify=False)
+        solve_for_cs = sp.solve(f(x) - sol_clean, c, check=False, simplify=False)
         if not solve_for_cs:
             try_log("No solution for c found.")
             return None
@@ -214,22 +221,23 @@ class ODEGenerator:
         if has_undefined(ode_expr):
             try_log("ODE contains undefined symbols.")
             return None
-        if len(sympy_to_str(ode_expr)) > self.max_len:
+
+        ode_str = sympy_to_str(ode_expr)
+        if len(ode_str) > self.max_len:
             try_log("ODE is too long.")
             return None
 
         # 7. Verify that the pair is valid by subbing in the solution
         # If correct, should return 0
-        if not verify_solution(ode_expr, solution_cleaned, rng):
+        if not verify_solution(ode_expr, sol_clean, rng):
             try_log("Solution failed to solve ODE")
             return None
 
         # 8. Convert to prefix and return
         try:
             eq_prefix = sympy_to_prefix(ode_expr)
-            sol_prefix = sympy_to_prefix(solution_cleaned)
         except Exception:
             try_log("Failed to convert to prefix.")
             return None
 
-        return sympy_to_str(ode_expr) + " = 0", " ".join(eq_prefix), sympy_to_str(solution_cleaned), " ".join(sol_prefix)
+        return ode_str + " = 0", " ".join(eq_prefix)
