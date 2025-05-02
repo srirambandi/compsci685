@@ -10,6 +10,6 @@ OPERATOR_WEIGHTS = {
 }
 MIN_INT = -5    # minimum integer value to appear in leaves
 MAX_INT = 5     # maximum integer value to appear in leaves
-MAX_OPS = 5    # maximum number of operators in the expression
-MAX_LEN = 150   # maximum length of the expression in characters
+MAX_OPS = 10    # maximum number of operators in the expression
+MAX_LEN = 200   # maximum length of the expression in characters
 TIMEOUT = 5     # timeout for for each ode generation (in seconds)

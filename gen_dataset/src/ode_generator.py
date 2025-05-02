@@ -160,7 +160,7 @@ class ODEGenerator:
         return stack
 
     @timeout(TIMEOUT)
-    def generate_ode_pair(self, rng: RandomState):
+    def generate_ode_pair(self, rng: RandomState, seen_solutions: set):
         # choose a max number of operators to place in the tree
         # [1, max_ops] inclusive
         num_ops = rng.randint(1, self.max_ops + 1)
@@ -181,8 +181,12 @@ class ODEGenerator:
         solution_cleaned = clean_solution(solution_sympy)
 
         # 4. Skip if solution is too long
-        if len(sympy_to_str(solution_cleaned)) > self.max_len:
+        sol_str = sympy_to_str(solution_cleaned)
+        if len(sol_str) > self.max_len:
             try_log("Solution is too long.")
+            return None
+        if sol_str in seen_solutions:
+            try_log("Solution already encountered.")
             return None
 
         # 5. Solve y = f(x, c) for c
@@ -221,7 +225,11 @@ class ODEGenerator:
             return None
 
         # 8. Convert to prefix and return
-        eq_prefix = sympy_to_prefix(ode_expr)
-        sol_prefix = sympy_to_prefix(solution_cleaned)
+        try:
+            eq_prefix = sympy_to_prefix(ode_expr)
+            sol_prefix = sympy_to_prefix(solution_cleaned)
+        except Exception:
+            try_log("Failed to convert to prefix.")
+            return None
 
         return sympy_to_str(ode_expr) + " = 0", " ".join(eq_prefix), sympy_to_str(solution_cleaned), " ".join(sol_prefix)

@@ -20,7 +20,7 @@ f = sp.Function('f', real=True, nonzero=True)
 
 SYMPY_OPERATOR_MAP = {
     sp.Add: 'add', sp.Mul: 'mul', sp.Pow: 'pow',
-    sp.sin: 'sin', sp.cos: 'cos', sp.sqrt: 'sqrt',
+    sp.sin: 'sin', sp.cos: 'cos',
     sp.exp: 'exp', sp.log: 'log',
     # sub, div, handled separately
 }
@@ -82,6 +82,18 @@ def prefix_to_sympy(prefix, arity_map):
     return helper(tokens)
 
 
+def is_Sqrt(expr: sp.Expr):
+    # check for form "a^(1/2)" or sp.Pow(a, sp.Rational(1, 2))
+    if not isinstance(expr, sp.Pow) or not len(expr.args) == 2:
+        return False
+
+    term2 = expr.args[1]
+
+    if term2 == sp.Rational(1, 2):
+        return True
+    return False
+
+
 def sympy_to_prefix(expr):
     def helper(expr: sp.Expr):
         # handle non-operator cases first
@@ -119,7 +131,10 @@ def sympy_to_prefix(expr):
                 else:
                     prefix = ['mul'] + prefix + helper(arg)
             return prefix
-        # handle other standard operator
+        # also check for sqrt as it is a special case of pow
+        elif is_Sqrt(expr):
+            return ['sqrt'] + helper(expr.args[0])
+            # handle other standard operator
         elif expr.func in SYMPY_OPERATOR_MAP:
             op_name = SYMPY_OPERATOR_MAP[expr.func]
             prefix = [op_name]

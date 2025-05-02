@@ -20,17 +20,18 @@ if __name__ == "__main__":
 
     try_log(f"Generating {num_samples} samples...", level=logging.INFO)
 
-    global_state_seed = np.random.randint(0, 9999999)
+    global_state_seed = np.random.randint(10e8)
     seed_gen_rng = np.random.RandomState(global_state_seed)
     try_log(f"Global state seed: {global_state_seed}", level=logging.INFO)
 
     seed_encounter = set()
+    sol_encountered = set()
     samples = []
 
     for i in tqdm(range(num_samples)):
         while True:
             try:
-                seed = seed_gen_rng.randint(0, 9999999)
+                seed = seed_gen_rng.randint(10e8)
                 rng = np.random.RandomState(seed)
 
                 if seed in seed_encounter:
@@ -38,7 +39,7 @@ if __name__ == "__main__":
                     continue
                 seed_encounter.add(seed)
 
-                out = generator.generate_ode_pair(rng)
+                out = generator.generate_ode_pair(rng, sol_encountered)
 
                 if out is None:
                     try_log("Invalid output. Regenerating...")
@@ -49,6 +50,13 @@ if __name__ == "__main__":
                 break
             except KeyboardInterrupt:
                 try_log("Keyboard interrupt detected. Exiting...", level=logging.INFO)
+
+                with open(output_file.replace(".csv", "_interrupted.csv"), "w", newline="") as f:
+                    writer = csv.writer(f)
+                    writer.writerow(["id", "seed", "equ_str", "equ_prefix", "sol_str", "sol_prefix"])
+                    writer.writerows(samples)
+
+                try_log(f"Dataset generated and saved to {output_file}", level=logging.INFO)
                 exit(0)
             except TimeoutError:
                 continue
