@@ -24,7 +24,7 @@ if __name__ == "__main__":
     seed_gen_rng = np.random.RandomState(global_state_seed)
     try_log(f"Global state seed: {global_state_seed}", level=logging.INFO)
 
-    eqn_encountered = set()
+    seed_encounter = set()
     samples = []
 
     for i in tqdm(range(num_samples)):
@@ -33,6 +33,11 @@ if __name__ == "__main__":
                 seed = seed_gen_rng.randint(0, 9999999)
                 rng = np.random.RandomState(seed)
 
+                if seed in seed_encounter:
+                    try_log(f"Seed {seed} already encountered. Regenerating...", level=logging.INFO)
+                    continue
+                seed_encounter.add(seed)
+
                 out = generator.generate_ode_pair(rng)
 
                 if out is None:
@@ -40,12 +45,6 @@ if __name__ == "__main__":
                     continue
 
                 eq_str, eq_prefix, sol_str, sol_prefix = out
-
-                if eq_str in eqn_encountered:
-                    try_log("Duplicate equation encountered. Regenerating...")
-                    continue
-
-                eqn_encountered.add(eq_str)
 
                 break
             except KeyboardInterrupt:
