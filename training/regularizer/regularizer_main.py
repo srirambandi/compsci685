@@ -49,6 +49,13 @@ class TreeRegularizer(torch.nn.Module):
         if (en - st <= 1):
             return 0, 0, 0
         
+        curr_span = str(st) + " " + str(en + 1)
+        if curr_span not in parse:
+            # If the current span (st, en) is not a key in our parse dictionary,
+            # it means it's not recognized as a non-terminal constituent for which
+            # a gold split is defined. Treat as effectively terminal for recursion.
+            return 0, 0, 0
+        
         scores = []
         indices = {}
         idx = 0
