@@ -7,7 +7,7 @@ import re
 from typing import Dict, List, Tuple, Optional
 
 
-def load_dataset(file_path='../gen_dataset/data/fin_dataset.csv'):
+def load_dataset(file_path='train.csv'):
 
 
     # Load the dataset

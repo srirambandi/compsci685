@@ -356,3 +356,40 @@ else:
 if trainer_treereg:
     trainer_treereg.train()
     print("\nTreeReg training finished.")
+
+# save treereg model
+model_treereg.save_pretrained("./results_treereg")
+tokenizer.save_pretrained("./results_treereg")
+
+
+# first, load validation dataset
+dataset, data_collator = load_dataset("val.csv")
+
+# now evaluate the model:
+# using functions from eval.py
+from eval import prefix_to_sympy, safe_parse_expr, check_sympy_equivalence
+
+# now for each item in val dataset, generate the prefix solution from model, and compare to ground truth
+
+n_correct = 0
+n = 0
+for i in range(len(dataset["equ_prefix"])):
+    # get the prefix solution from model
+    prefix_str = dataset["equ_prefix"][i]
+    prefix_solution = model.generate(tokenizer(prefix_str, return_tensors="pt").input_ids, max_length=50)
+    prefix_solution = tokenizer.decode(prefix_solution[0], skip_special_tokens=True)
+
+    # get the ground truth
+    ground_truth = dataset["sol_str"][i]
+
+    # convert prefix to sympy
+    prefix_solution_sympy = prefix_to_sympy(prefix_solution)
+    ground_truth_sympy = safe_parse_expr(ground_truth)
+
+    # check if they are equivalent
+    if check_sympy_equivalence(prefix_solution_sympy, ground_truth_sympy):
+        n_correct += 1
+        
+    n += 1
+    
+print(f"Accuracy: {n_correct / n}")
