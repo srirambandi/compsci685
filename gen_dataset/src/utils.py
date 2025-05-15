@@ -4,7 +4,7 @@ import logging
 
 import numpy as np
 import sympy as sp
-from config.parameters import LOGGING_LEVEL
+from gen_dataset.config.parameters import LOGGING_LEVEL
 
 logging.basicConfig(level=LOGGING_LEVEL, format='[%(levelname)s] %(message)s')
 logger = logging.getLogger()
