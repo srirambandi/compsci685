@@ -58,16 +58,16 @@ def main():
                 continue
 
             # operator filter: ensure tokens present are in allowed set
-            ops_inp = {t for t in inp_toks if t in allowed_ops}
-            ops_out = {t for t in out_toks if t in allowed_ops}
-            if not ops_inp.issubset(allowed_ops) or not ops_out.issubset(allowed_ops):
-                continue
+            # ops_inp = {t for t in inp_toks if t in allowed_ops}
+            # ops_out = {t for t in out_toks if t in allowed_ops}
+            # if not ops_inp.issubset(allowed_ops) or not ops_out.issubset(allowed_ops):
+            #     continuexw
 
             # write passing example
             fout.write(f"{inp_prefix}\t{out_prefix}\n")
             written += 1
 
-    print(f"Wrote {written} lines to {args.output}")
+    print(f"Wrote {written} lines to {args.output}, from {total_lines} total lines.")
 
 if __name__ == "__main__":
     main()

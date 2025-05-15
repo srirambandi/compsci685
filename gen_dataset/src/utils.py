@@ -58,11 +58,11 @@ def prefix_to_sympy(prefix, arity_map):
         elif token == 'y':
             return f
         
-        # bare integers like "42" or "-7", just in case
-        if token.lstrip('-').isdigit():
+        # bare integers like "42" just in case, our dataset doesn't have negative integers(not balanced, but 0-9)
+        if token.isdigit():
             return sp.Integer(int(token))
         
-        # INT+ N  or  INT- N to signed integer
+        # INT+ N or INT- N to signed integer
         if token in ('INT+', 'INT-'):
             mag = tokens.pop(0)
             if not mag.lstrip('-').isdigit():
