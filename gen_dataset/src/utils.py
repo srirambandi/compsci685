@@ -22,6 +22,8 @@ OPERATORS = {
     'sinh': 1, 'cosh': 1, 'tanh': 1,
     # inverse hyperbolic - unary
     'asinh': 1, 'acosh': 1, 'atanh': 1,
+    # INT
+    'INT+': 1, 'INT-': 1,
 }
 
 x = sp.Symbol('x', real=True, nonzero=True)
@@ -30,7 +32,7 @@ f = sp.Function('f', real=True, nonzero=True)
 
 SYMPY_OPERATOR_MAP = {
     sp.Add: 'add', sp.Mul: 'mul', sp.Pow: 'pow',
-    sp.Abs: 'abs', sp.sign: 'sign', sp.exp: 'exp', sp.log: 'log',
+    sp.exp: 'exp', sp.log: 'log', sp.Abs: 'abs', sp.sign: 'sign',
     sp.sin: 'sin', sp.cos: 'cos', sp.tan: 'tan',
     sp.asin: 'asin', sp.acos: 'acos', sp.atan: 'atan',
     sp.sinh: 'sinh', sp.cosh: 'cosh', sp.tanh: 'tanh',
@@ -56,22 +58,14 @@ def prefix_to_sympy(prefix, arity_map):
         elif token == 'c':
             return c
         elif token == 'y':
-            return f
+            return f(x)
+        elif token == "y'":
+            return sp.Derivative(f(x), x)
         
-        # bare integers like "42" just in case, our dataset doesn't have negative integers(not balanced, but 0-9)
+
         if token.isdigit():
             return sp.Integer(int(token))
-        
-        # INT+ N or INT- N to signed integer
-        if token in ('INT+', 'INT-'):
-            mag = tokens.pop(0)
-            if not mag.lstrip('-').isdigit():
-                raise Exception(f"Expected magnitude after {token}, got {mag}")
-            val = int(mag)
-            if token == 'INT-':
-                val = -val
-            return sp.Integer(val)
-        
+
         # mathematical constants
         if token == 'E':
             return sp.E
@@ -106,7 +100,9 @@ def prefix_to_sympy(prefix, arity_map):
                 return sp.Abs(args[0])
             elif token == 'sign':
                 return sp.sign(args[0])
-            
+            elif token in ['INT-', 'INT+']:
+                return sp.Integer(args[0] * -1 if token == 'INT-' else args[0])
+
             # trig operators
             elif token == 'sin':
                 return sp.sin(args[0])
@@ -199,7 +195,7 @@ def sympy_to_prefix(expr):
         # also check for sqrt as it is a special case of pow
         elif is_Sqrt(expr):
             return ['sqrt'] + helper(expr.args[0])
-            # handle other standard operator
+        # handle other standard operator
         elif expr.func in SYMPY_OPERATOR_MAP:
             op_name = SYMPY_OPERATOR_MAP[expr.func]
             prefix = [op_name]
