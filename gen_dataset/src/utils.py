@@ -10,20 +10,8 @@ logging.basicConfig(level=LOGGING_LEVEL, format='[%(levelname)s] %(message)s')
 logger = logging.getLogger()
 
 OPERATORS = {
-    # basic - binary
     'add': 2, 'sub': 2, 'mul': 2, 'div': 2, 'pow': 2,
-    # basic - unary
-    'sqrt': 1, 'exp': 1, 'log': 1, 'abs': 1, 'sign': 1,
-    # trig - unary
-    'sin': 1, 'cos': 1, 'tan': 1,
-    # inverse trig - unary
-    'asin': 1, 'acos': 1, 'atan': 1,
-    # hyperbolic - unary
-    'sinh': 1, 'cosh': 1, 'tanh': 1,
-    # inverse hyperbolic - unary
-    'asinh': 1, 'acosh': 1, 'atanh': 1,
-    # INT
-    'INT+': 1, 'INT-': 1,
+    'sin': 1, 'cos': 1, 'exp': 1, 'log': 1, 'sqrt': 1,
 }
 
 x = sp.Symbol('x', real=True, nonzero=True)
@@ -32,11 +20,8 @@ f = sp.Function('f', real=True, nonzero=True)
 
 SYMPY_OPERATOR_MAP = {
     sp.Add: 'add', sp.Mul: 'mul', sp.Pow: 'pow',
-    sp.exp: 'exp', sp.log: 'log', sp.Abs: 'abs', sp.sign: 'sign',
-    sp.sin: 'sin', sp.cos: 'cos', sp.tan: 'tan',
-    sp.asin: 'asin', sp.acos: 'acos', sp.atan: 'atan',
-    sp.sinh: 'sinh', sp.cosh: 'cosh', sp.tanh: 'tanh',
-    sp.asinh: 'asinh', sp.acosh: 'acosh', sp.atanh: 'atanh',
+    sp.sin: 'sin', sp.cos: 'cos',
+    sp.exp: 'exp', sp.log: 'log',
     # sub, div, handled separately
 }
 
@@ -58,20 +43,9 @@ def prefix_to_sympy(prefix, arity_map):
         elif token == 'c':
             return c
         elif token == 'y':
-            return f(x)
-        elif token == "y'":
-            return sp.Derivative(f(x), x)
-        
-
-        if token.isdigit():
-            return sp.Integer(int(token))
-
-        # mathematical constants
-        if token == 'E':
-            return sp.E
-        if token == 'pi':
-            return sp.pi
-
+            return f
+        elif isinstance(token, np.int32):
+            return sp.Integer(token)
         elif token in arity_map:
             arity = arity_map[token]
             args = []
@@ -79,7 +53,6 @@ def prefix_to_sympy(prefix, arity_map):
                 arg = helper(tokens)
                 args.append(arg)
 
-            # basic operators
             if token == 'add':
                 return sp.Add(*args)
             elif token == 'sub':
@@ -92,48 +65,14 @@ def prefix_to_sympy(prefix, arity_map):
                 return sp.Pow(*args)
             elif token == 'sqrt':
                 return sp.sqrt(args[0])
-            elif token == 'exp':
-                return sp.exp(args[0])
-            elif token == 'log':
-                return sp.log(args[0])
-            elif token == 'abs':
-                return sp.Abs(args[0])
-            elif token == 'sign':
-                return sp.sign(args[0])
-            elif token in ['INT-', 'INT+']:
-                return sp.Integer(args[0] * -1 if token == 'INT-' else args[0])
-
-            # trig operators
             elif token == 'sin':
                 return sp.sin(args[0])
             elif token == 'cos':
                 return sp.cos(args[0])
-            elif token == 'tan':
-                return sp.tan(args[0])
-            
-            # inverse trig operators
-            elif token == 'asin':
-                return sp.asin(args[0])
-            elif token == 'acos':
-                return sp.acos(args[0])
-            elif token == 'atan':
-                return sp.atan(args[0])
-            
-            # hyperbolic operators
-            elif token == 'sinh':
-                return sp.sinh(args[0])
-            elif token == 'cosh':
-                return sp.cosh(args[0])
-            elif token == 'tanh':
-                return sp.tanh(args[0])
-            
-            # inverse hyperbolic operators
-            elif token == 'asinh':
-                return sp.asinh(args[0])
-            elif token == 'acosh':
-                return sp.acosh(args[0])
-            elif token == 'atanh':
-                return sp.atanh(args[0])
+            elif token == 'exp':
+                return sp.exp(args[0])
+            elif token == 'log':
+                return sp.log(args[0])
             else:
                 try_log(f"Unknown operator: {token}")
         else:
@@ -195,7 +134,7 @@ def sympy_to_prefix(expr):
         # also check for sqrt as it is a special case of pow
         elif is_Sqrt(expr):
             return ['sqrt'] + helper(expr.args[0])
-        # handle other standard operator
+            # handle other standard operator
         elif expr.func in SYMPY_OPERATOR_MAP:
             op_name = SYMPY_OPERATOR_MAP[expr.func]
             prefix = [op_name]
